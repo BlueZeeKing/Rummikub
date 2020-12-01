@@ -21,11 +21,11 @@ class Rummikub {
 
         this.tiles = []
         for (let i = 0; i < 3; i++) {
-            this.tiles.push([random(0, window.innerWidth - 100), random(0, window.innerHeight - 150), random(1, 13), colors[random(0, 4)], 0, 0]) // x, y, num, color, offsetX, offsetY
+            this.tiles.push([random(0, window.innerWidth - 100), random(0, window.innerHeight - 150), random(1, 13), colors[random(0, 4)], 0, 0], false) // x, y, num, color, offsetX, offsetY, move
         }
 
         this.tiles.forEach(function (tile) {
-            this.makeTile(this.ctx, tile)
+            this.makeTile(this.ctx, tile, this.tiles)
         }.bind(this))
 
         document.addEventListener('mousedown', function (e) {
@@ -38,15 +38,11 @@ class Rummikub {
                     tile[4] = x - tile[0]
                     tile[5] = y - tile[1]
 
-                    this.ctx.clearRect(tile[0] - 5, tile[1] - 5, 125, 175)
+                    tile[6] = true
+
+                    this.deleteTile(this.ctx, tile, this.tiles)
 
                     this.currentTile = index
-
-                    this.tiles.forEach(function (tile, index) {
-                        if (this.tiles[this.currentTile][0] >= tile[0] - 230 && this.tiles[this.currentTile][0] <= tile[0] + 230 && this.tiles[this.currentTile][1] >= tile[1] - 330 && this.tiles[this.currentTile][1] <= tile[1] + 330 && index != this.currentTile) {
-                            this.makeTile(this.ctx, tile)
-                        }
-                    }.bind(this))
 
                     document.addEventListener('mousemove', this.moveHandler)
 
@@ -56,48 +52,51 @@ class Rummikub {
         }.bind(this))
 
         document.addEventListener('mouseup', function () {
-            console.log('mouseup')
+            console.log('up')
+
+            this.tiles[this.currentTile][6] = false
 
             document.removeEventListener('mousemove', this.moveHandler)
 
             this.moveCTX.clearRect(0, 0, this.move.clientWidth, this.move.clientHeight)
-            this.makeTile(this.ctx, this.tiles[this.currentTile])
+            this.makeTile(this.ctx, this.tiles[this.currentTile], this.tiles)
         }.bind(this))
 
-        document.addEventListener('mousedown', function (e) {
+        document.addEventListener('touchdown', function (e) {
             console.log('down')
             let x = e.pageX - this.move.offsetLeft
             let y = e.pageY - this.move.offsetTop
 
-            this.tiles.forEach(function (tile, index) {
+            for (let index = 0; index < tiles.length; index++) {
+                let tile = tiles[index]
                 if (x >= tile[0] && x <= tile[0] + 115 && y >= tile[1] && y <= tile[1] + 165) {
                     tile[4] = x - tile[0]
                     tile[5] = y - tile[1]
 
-                    this.ctx.clearRect(tile[0] - 5, tile[1] - 5, 125, 175)
+                    tile[6] = true
+
+                    clearTile(this.ctx, tile, tiles)
 
                     this.currentTile = index
 
-                    this.tiles.forEach(function (tile, index) {
-                        if (this.tiles[this.currentTile][0] >= tile[0] - 230 && this.tiles[this.currentTile][0] <= tile[0] + 230 && this.tiles[this.currentTile][1] >= tile[1] - 330 && this.tiles[this.currentTile][1] <= tile[1] + 330 && index != this.currentTile) {
-                            this.makeTile(this.ctx, tile)
-                        }
-                    }.bind(this))
-
-                    document.addEventListener('mousemove', this.moveHandler)
+                    document.addEventListener('touchmove', this.moveHandler)
 
                     this.makeTile(this.moveCTX, tile)
+
+                    break
                 }
-            }.bind(this))
+            }
         }.bind(this))
 
-        document.addEventListener('mouseup', function () {
-            console.log('mouseup')
+        document.addEventListener('touchend', function () {
+            console.log('up')
 
-            document.removeEventListener('mousemove', this.moveHandler)
+            this.tiles[this.currentTile][6] = false
+
+            document.removeEventListener('touchmove', this.moveHandler)
 
             this.moveCTX.clearRect(0, 0, this.move.clientWidth, this.move.clientHeight)
-            this.makeTile(this.ctx, this.tiles[this.currentTile])
+            this.makeTile(this.ctx, this.tiles[this.currentTile], this.tiles)
         }.bind(this))
 
         this.moveHandler = function (e) {
@@ -114,41 +113,61 @@ class Rummikub {
         }.bind(this)
     }
 
-    makeTile(ctx, data) {
+    makeTile(ctx, tile, tiles=[]) {
         ctx.beginPath();
         ctx.fillStyle = "#b3b3b3";
         ctx.strokeStyle = "#808080";
-        ctx.moveTo(data[0] + 100, data[1]);
-        ctx.lineTo(data[0] + 115, data[1] + 15);
-        ctx.lineTo(data[0] + 115, data[1] + 165);
-        ctx.lineTo(data[0] + 100, data[1] + 150);
-        ctx.lineTo(data[0] + 100, data[1]);
+        ctx.moveTo(tile[0] + 100, tile[1]);
+        ctx.lineTo(tile[0] + 115, tile[1] + 15);
+        ctx.lineTo(tile[0] + 115, tile[1] + 165);
+        ctx.lineTo(tile[0] + 100, tile[1] + 150);
+        ctx.lineTo(tile[0] + 100, tile[1]);
         ctx.fill();
         ctx.stroke();
 
         ctx.beginPath();
         ctx.fillStyle = "#999999";
         ctx.strokeStyle = "#808080";
-        ctx.moveTo(data[0], data[1] + 150);
-        ctx.lineTo(data[0] + 100, data[1] + 150);
-        ctx.lineTo(data[0] + 115, data[1] + 165);
-        ctx.lineTo(data[0] + 15, data[1] + 165);
-        ctx.lineTo(data[0], data[1] + 150);
+        ctx.moveTo(tile[0], tile[1] + 150);
+        ctx.lineTo(tile[0] + 100, tile[1] + 150);
+        ctx.lineTo(tile[0] + 115, tile[1] + 165);
+        ctx.lineTo(tile[0] + 15, tile[1] + 165);
+        ctx.lineTo(tile[0], tile[1] + 150);
         ctx.fill();
         ctx.stroke();
 
         ctx.beginPath();
         ctx.fillStyle = "#cccccc";
         ctx.strokeStyle = "#666666";
-        ctx.rect(data[0], data[1], 100, 150);
+        ctx.rect(tile[0], tile[1], 100, 150);
         ctx.fill();
         ctx.stroke();
 
         ctx.beginPath();
         ctx.font = "70px Arial";
-        ctx.fillStyle = data[3];
+        ctx.fillStyle = tile[3];
         ctx.textAlign = "center";
-        ctx.fillText(data[2], data[0] + 50, data[1] + 105);
+        ctx.fillText(tile[2], tile[0] + 50, tile[1] + 105);
+
+        tiles.forEach(function (item) {
+            console.log(item)
+            console.log(item[6] == false)
+            if (((item[0] >= tile[0] + 102 && item[0] <= tile[0] + 120 && item[1] >= tile[1] - 175 && item[1] <= tile[1] + 175) || (item[1] >= tile[1] + 150 && item[1] <= tile[1] + 160 && item[0] >= tile[0] - 125 && item[0] <= tile[0] + 125)) && item != tile && item[6] == false) {
+                console.log('remake')
+                this.makeTile(ctx, item, tiles)
+            }
+        }.bind(this))
+    }
+
+    deleteTile(ctx, tile, tiles=[]) {
+        ctx.clearRect(tile[0]-5, tile[1]-5, 125, 175)
+
+        tiles.forEach(function (item) {
+            if (item[0] >= tile[0] - 125 && item[0] <= tile[0] + 125 && item[1] >= tile[1] - 175 && item[1] <= tile[1] + 175 && tile != item) {
+                console.log('overlap')
+                this.makeTile(ctx, item, tiles)
+            }
+        }.bind(this))
     }
 }
 
